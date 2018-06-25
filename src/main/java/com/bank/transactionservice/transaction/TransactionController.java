@@ -1,17 +1,10 @@
 package com.bank.transactionservice.transaction;
 
+import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.server.ServerResponse;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import javax.validation.Valid;
 
 
 @RestController
@@ -42,11 +35,12 @@ public class TransactionController {
     }
 
 
-    @PostMapping("v1/transactions")
-    public Mono<ServerResponse> postTransaction(@RequestBody Transaction transaction) {
-        Mono<Transaction> transactionMono = transactionRepository.save(transaction);
-        return ServerResponse.created(ServletUriComponentsBuilder.fromCurrentRequest().build()
-                .toUri()).contentType(MediaType.APPLICATION_JSON).body(transactionMono, Transaction.class);
+    @PostMapping("/v1/transactions")
+    Publisher<Transaction> saveTransaction(@RequestBody Mono<Transaction> transaction) {
+        Mono<Transaction> transactionMono = transaction.flatMap(transactionRepository::save);
+        transactionMono.subscribe();
+        return transactionMono;
+
     }
 }
 
